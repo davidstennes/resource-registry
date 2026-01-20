@@ -1,6 +1,4 @@
 # resource-registry
-Local resource sharing
-# resource-registry
 
 Private, invite-only registry.
 
