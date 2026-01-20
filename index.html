@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Resource Registry</title>
+  <meta name="description" content="Simple roster: people, skills, offers, needs."/>
+  <style>
+    :root{
+      --bg:#f5f6f8; --card:#fff; --text:#111; --muted:#666; --border:#ddd; --link:#1d4ed8;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);}
+    .wrap{max-width:980px;margin:0 auto;padding:12px;}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:0 1px 10px rgba(0,0,0,.04);}
+    .top{padding:12px 14px;border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;}
+    .title{font-weight:900;font-size:18px;}
+    .sub{color:var(--muted);font-size:13px;margin-top:2px;}
+    .grid{display:grid;grid-template-columns:260px 1fr;gap:10px;padding:10px;}
+    .left,.right{padding:10px;}
+    .search{width:100%;padding:10px;border:1px solid var(--border);border-radius:10px;}
+    .list{margin-top:10px;display:flex;flex-direction:column;gap:6px;max-height:70vh;overflow:auto;}
+    .item{border:1px solid var(--border);border-radius:12px;padding:10px;cursor:pointer;background:#fff;}
+    .item.active{outline:2px solid rgba(29,78,216,.22);border-color:rgba(29,78,216,.35);}
+    .alias{font-weight:800;}
+    .muted{color:var(--muted);font-size:13px;}
+    .pillrow{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 10px;}
+    .pill{border:1px solid var(--border);border-radius:999px;padding:5px 10px;font-size:13px;background:#fff;}
+    .h{margin:10px 0 6px;font-weight:800;}
+    .btnrow{display:flex;gap:8px;flex-wrap:wrap;}
+    .btn{display:inline-block;padding:10px 12px;border-radius:12px;border:1px solid var(--border);text-decoration:none;color:var(--text);background:#fff;}
+    .btn.primary{border-color:rgba(29,78,216,.35);color:var(--link);}
+    .btn.small{padding:8px 10px;font-size:13px;}
+    .note{white-space:pre-wrap}
+    @media (max-width:760px){.grid{grid-template-columns:1fr}.left{order:2}.right{order:1}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="top">
+        <div>
+          <div class="title">Resource Registry</div>
+          <div class="sub">Browse the roster. To add/update your entry, use the button.</div>
+        </div>
+        <div class="btnrow">
+          <!-- IMPORTANT: replace YOUR_USER and YOUR_REPO below if you rename repo -->
+          <a class="btn primary" id="updateBtn" href="https://github.com/davidstennes/resource-registry/issues/new?template=update-entry.yml" target="_blank" rel="noreferrer">Add / Update my entry</a>
+          <a class="btn" href="./people.json" target="_blank" rel="noreferrer">View data</a>
+        </div>
+      </div>
+
+      <div class="grid">
+        <div class="left">
+          <input id="q" class="search" placeholder="Search alias / skills / offers / needs…" />
+          <div id="list" class="list"></div>
+        </div>
+
+        <div class="right">
+          <div id="detail" class="muted">Select a person.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+let PEOPLE = [];
+let selected = null;
+
+function esc(s){
+  return (s??"").toString().replace(/[&<>"']/g,m=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[m]));
+}
+
+function matches(p, term){
+  term = term.trim().toLowerCase();
+  if(!term) return true;
+  const hay = [
+    p.alias,
+    ...(p.skills||[]),
+    ...(p.offers||[]),
+    ...(p.needs||[]),
+    p.location||"",
+    p.note||""
+  ].join(" ").toLowerCase();
+  return hay.includes(term);
+}
+
+function pills(arr){
+  const a = (arr||[]).filter(Boolean);
+  if(!a.length) return `<span class="muted">—</span>`;
+  return a.map(x=>`<span class="pill">${esc(x)}</span>`).join("");
+}
+
+function renderList(term=""){
+  const list = document.getElementById("list");
+  list.innerHTML = "";
+  const filtered = PEOPLE.filter(p=>matches(p,term));
+  filtered.forEach(p=>{
+    const div = document.createElement("div");
+    div.className = "item" + (selected && selected.alias===p.alias ? " active" : "");
+    div.onclick = ()=>{ selected=p; renderList(document.getElementById("q").value); renderDetail(); };
+    const preview = (p.skills||[]).slice(0,3).join(", ");
+    div.innerHTML = `
+      <div class="alias">${esc(p.alias)}</div>
+      <div class="muted">${esc(preview)}${(p.skills||[]).length>3 ? "…" : ""}</div>
+    `;
+    list.appendChild(div);
+  });
+
+  if(filtered.length === 0){
+    const empty = document.createElement("div");
+    empty.className = "muted";
+    empty.style.padding = "10px";
+    empty.textContent = "No matches.";
+    list.appendChild(empty);
+  }
+}
+
+function renderDetail(){
+  const d = document.getElementById("detail");
+  if(!selected){ d.textContent = "Select a person."; return; }
+
+  d.innerHTML = `
+    <div style="font-weight:900;font-size:20px;">${esc(selected.alias)}</div>
+    ${selected.location ? `<div class="muted">${esc(selected.location)}</div>` : ""}
+
+    <div class="h">Skills</div>
+    <div class="pillrow">${pills(selected.skills)}</div>
+
+    <div class="h">Offers</div>
+    <div class="pillrow">${pills(selected.offers)}</div>
+
+    <div class="h">Needs</div>
+    <div class="pillrow">${pills(selected.needs)}</div>
+
+    <div class="h">Note</div>
+    <div class="note">${selected.note ? esc(selected.note) : `<span class="muted">—</span>`}</div>
+  `;
+}
+
+async function boot(){
+  const res = await fetch("./people.json", {cache:"no-store"});
+  PEOPLE = await res.json();
+  PEOPLE.sort((a,b)=>(a.alias||"").localeCompare(b.alias||""));
+  selected = PEOPLE[0] || null;
+  renderList("");
+  renderDetail();
+}
+
+document.getElementById("q").addEventListener("input", e=>renderList(e.target.value));
+boot();
+</script>
+</body>
+</html>
