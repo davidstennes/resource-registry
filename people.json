@@ -1,0 +1,18 @@
+[
+  {
+    "alias": "Mesa",
+    "skills": ["solar", "dc wiring", "batteries"],
+    "offers": ["wiring help", "diagnostics"],
+    "needs": [],
+    "location": "Holtville Hot Springs area",
+    "note": "Mornings best"
+  },
+  {
+    "alias": "Sage",
+    "skills": ["camp logistics", "cooking"],
+    "offers": ["extra gear", "rides sometimes"],
+    "needs": ["ice run occasionally"],
+    "location": "Holtville Hot Springs area",
+    "note": ""
+  }
+]
