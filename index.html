@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Resource Registry</title>
+  <style>
+    :root{--bg:#f5f6f8;--card:#fff;--text:#111;--muted:#666;--border:#ddd;--link:#1d4ed8;}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);}
+    .wrap{max-width:980px;margin:0 auto;padding:12px;}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:0 1px 10px rgba(0,0,0,.04);}
+    .top{padding:12px 14px;border-bottom:1px solid var(--border);}
+    .grid{display:grid;grid-template-columns:260px 1fr;gap:10px;padding:10px;}
+    .left,.right{padding:10px;}
+    .search{width:100%;padding:10px;border:1px solid var(--border);border-radius:10px;}
+    .list{margin-top:10px;display:flex;flex-direction:column;gap:6px;max-height:70vh;overflow:auto;}
+    .item{border:1px solid var(--border);border-radius:12px;padding:10px;cursor:pointer;background:#fff;}
+    .item.active{outline:2px solid rgba(29,78,216,.25);border-color:rgba(29,78,216,.4);}
+    .alias{font-weight:700;}
+    .muted{color:var(--muted);font-size:13px;}
+    .pillrow{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 10px;}
+    .pill{border:1px solid var(--border);border-radius:999px;padding:5px 10px;font-size:13px;background:#fff;}
+    .h{margin:10px 0 6px;font-weight:700;}
+    .btn{display:inline-block;padding:10px 12px;border-radius:12px;border:1px solid var(--border);text-decoration:none;color:var(--text);background:#fff;}
+    .btn.primary{border-color:rgba(29,78,216,.4);color:var(--link);}
+    @media (max-width:760px){.grid{grid-template-columns:1fr}.left{order:2}.right{order:1}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="top">
+        <div style="font-weight:800;font-size:18px;">Resource Registry</div>
+        <div class="muted">Browse people + skills. Write access required to update the shared list.</div>
+      </div>
+
+      <div class="grid">
+        <div class="left">
+          <input id="q" class="search" placeholder="Search skills or alias…" />
+          <div id="list" class="list"></div>
+        </div>
+
+        <div class="right">
+          <div id="detail" class="muted">Select a person.</div>
+          <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
+            <!-- Replace this link with your chosen “update” method -->
+            <a class="btn primary" id="updateLink" href="#" target="_blank" rel="noreferrer">Update my entry</a>
+            <a class="btn" href="./people.json" target="_blank" rel="noreferrer">View data</a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+<script>
+let PEOPLE = [];
+let selected = null;
+
+function esc(s){return (s??"").toString().replace(/[&<>"']/g,m=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[m]));}
+
+function matches(p, term){
+  term = term.trim().toLowerCase();
+  if(!term) return true;
+  const hay = [
+    p.alias,
+    ...(p.skills||[]),
+    ...(p.offers||[]),
+    ...(p.needs||[]),
+    p.note||""
+  ].join(" ").toLowerCase();
+  return hay.includes(term);
+}
+
+function renderList(term=""){
+  const list = document.getElementById("list");
+  list.innerHTML = "";
+  const filtered = PEOPLE.filter(p=>matches(p,term));
+  filtered.forEach(p=>{
+    const div = document.createElement("div");
+    div.className = "item" + (selected && selected.alias===p.alias ? " active" : "");
+    div.onclick = ()=>{ selected=p; renderList(document.getElementById("q").value); renderDetail(); };
+    div.innerHTML = `<div class="alias">${esc(p.alias)}</div>
+      <div class="muted">${esc((p.skills||[]).slice(0,3).join(", "))}${(p.skills||[]).length>3 ? "…" : ""}</div>`;
+    list.appendChild(div);
+  });
+}
+
+function pills(arr){ return (arr||[]).map(x=>`<span class="pill">${esc(x)}</span>`).join(""); }
+
+function renderDetail(){
+  const d = document.getElementById("detail");
+  if(!selected){ d.textContent = "Select a person."; return; }
+
+  d.innerHTML = `
+    <div style="font-weight:900;font-size:20px;">${esc(selected.alias)}</div>
+
+    <div class="h">Skills</div>
+    <div class="pillrow">${pills(selected.skills)}</div>
+
+    <div class="h">Offers</div>
+    <div class="pillrow">${pills(selected.offers)}</div>
+
+    <div class="h">Needs</div>
+    <div class="pillrow">${pills(selected.needs)}</div>
+
+    ${selected.note ? `<div class="h">Note</div><div>${esc(selected.note)}</div>` : ""}
+  `;
+
+  // Optional: make the Update link prefill alias in whatever system you use
+  // For now, it’s just a placeholder:
+  document.getElementById("updateLink").href = "#";
+}
+
+async function boot(){
+  const res = await fetch("./people.json", {cache:"no-store"});
+  PEOPLE = await res.json();
+  PEOPLE.sort((a,b)=>(a.alias||"").localeCompare(b.alias||""));
+  renderList("");
+  renderDetail();
+}
+document.getElementById("q").addEventListener("input", e=>renderList(e.target.value));
+boot();
+</script>
+</body>
+</html>
