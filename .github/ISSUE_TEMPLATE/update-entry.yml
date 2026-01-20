@@ -1,1 +1,74 @@
 
+name: Add / Update my entry
+description: Submit or update your roster entry (alias, skills, offers, needs)
+title: "Entry: "
+labels: ["registry-update"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Fill this out. Submitting creates a PR that updates `people.json`.
+        Use a pseudonym if you want. No exact locations or personal contact info.
+
+  - type: input
+    id: alias
+    attributes:
+      label: Alias / handle
+      description: What should be shown in the roster list
+      placeholder: Mesa
+    validations:
+      required: true
+
+  - type: textarea
+    id: skills
+    attributes:
+      label: Skills (comma-separated)
+      description: Example: solar, dc wiring, welding
+      placeholder: solar, dc wiring, batteries
+    validations:
+      required: false
+
+  - type: textarea
+    id: offers
+    attributes:
+      label: Offers (comma-separated)
+      description: Example: wiring help, spare parts
+      placeholder: wiring help, spare parts
+    validations:
+      required: false
+
+  - type: textarea
+    id: needs
+    attributes:
+      label: Needs (comma-separated)
+      description: Example: ride to town, help lifting
+      placeholder: none
+    validations:
+      required: false
+
+  - type: input
+    id: location
+    attributes:
+      label: General location (optional)
+      description: Keep it broad. No exact coordinates.
+      placeholder: Holtville Hot Springs area
+    validations:
+      required: false
+
+  - type: textarea
+    id: note
+    attributes:
+      label: Note (optional)
+      description: Any extra context
+      placeholder: Mornings best
+    validations:
+      required: false
+
+  - type: input
+    id: invitecode
+    attributes:
+      label: Invite code (optional)
+      description: If you want light gating, enter the group code. Leave blank if not used.
+      placeholder: (leave blank)
+    validations:
+      required: false
